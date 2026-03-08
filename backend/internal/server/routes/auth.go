@@ -61,6 +61,8 @@ func RegisterAuthRoutes(
 		}), h.Auth.ResetPassword)
 		auth.GET("/oauth/linuxdo/start", h.Auth.LinuxDoOAuthStart)
 		auth.GET("/oauth/linuxdo/callback", h.Auth.LinuxDoOAuthCallback)
+		auth.GET("/oauth/oidc/start", h.Auth.OIDCOAuthStart)
+		auth.GET("/oauth/oidc/callback", h.Auth.OIDCOAuthCallback)
 	}
 
 	// 公开设置（无需认证）
