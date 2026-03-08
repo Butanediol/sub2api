@@ -14,6 +14,9 @@
       <!-- LinuxDo Connect OAuth 登录 -->
       <LinuxDoOAuthSection v-if="linuxdoOAuthEnabled" :disabled="isLoading" />
 
+      <!-- OIDC OAuth 登录 -->
+      <OIDCOAuthSection v-if="oidcOAuthEnabled" :disabled="isLoading" :display-name="oidcDisplayName" />
+
       <!-- Registration Disabled Message -->
       <div
         v-if="!registrationEnabled && settingsLoaded"
@@ -289,6 +292,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { AuthLayout } from '@/components/layout'
 import LinuxDoOAuthSection from '@/components/auth/LinuxDoOAuthSection.vue'
+import OIDCOAuthSection from '@/components/auth/OIDCOAuthSection.vue'
 import Icon from '@/components/icons/Icon.vue'
 import TurnstileWidget from '@/components/TurnstileWidget.vue'
 import { useAuthStore, useAppStore } from '@/stores'
@@ -324,6 +328,8 @@ const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
 const siteName = ref<string>('Sub2API')
 const linuxdoOAuthEnabled = ref<boolean>(false)
+const oidcOAuthEnabled = ref<boolean>(false)
+const oidcDisplayName = ref<string>('SSO')
 const registrationEmailSuffixWhitelist = ref<string[]>([])
 
 // Turnstile
@@ -376,6 +382,8 @@ onMounted(async () => {
     turnstileSiteKey.value = settings.turnstile_site_key || ''
     siteName.value = settings.site_name || 'Sub2API'
     linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
+    oidcOAuthEnabled.value = settings.oidc_oauth_enabled
+    oidcDisplayName.value = settings.oidc_display_name || 'SSO'
     registrationEmailSuffixWhitelist.value = normalizeRegistrationEmailSuffixWhitelist(
       settings.registration_email_suffix_whitelist || []
     )

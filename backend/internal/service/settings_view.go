@@ -30,6 +30,14 @@ type SystemSettings struct {
 	LinuxDoConnectClientSecretConfigured bool
 	LinuxDoConnectRedirectURL            string
 
+	// Generic OIDC OAuth 登录
+	OIDCEnabled                bool
+	OIDCDisplayName            string
+	OIDCClientID               string
+	OIDCClientSecret           string
+	OIDCClientSecretConfigured bool
+	OIDCRedirectURL            string
+
 	SiteName                    string
 	SiteLogo                    string
 	SiteSubtitle                string
@@ -101,7 +109,11 @@ type PublicSettings struct {
 	CustomMenuItems             string // JSON array of custom menu items
 
 	LinuxDoOAuthEnabled bool
-	Version             string
+
+	OIDCOAuthEnabled bool
+	OIDCDisplayName  string
+
+	Version string
 }
 
 // SoraS3Settings Sora S3 存储配置
