@@ -441,6 +441,15 @@ export default {
       completing: 'Completing registration…',
       completeRegistrationFailed: 'Registration failed. Please check your invitation code and try again.'
     },
+    oidc: {
+      signIn: 'Continue with {provider}',
+      orContinue: 'or continue with email',
+      callbackTitle: 'Signing you in',
+      callbackProcessing: 'Completing login, please wait...',
+      callbackHint: 'If you are not redirected automatically, go back to the login page and try again.',
+      callbackMissingToken: 'Missing login token, please try again.',
+      backToLogin: 'Back to Login'
+    },
     oauth: {
       code: 'Code',
       state: 'State',
@@ -4038,6 +4047,29 @@ export default {
         redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/linuxdo/callback',
         redirectUrlHint:
           'Must match the redirect URL configured in Connect.Linux.Do (must be an absolute http(s) URL)',
+        quickSetCopy: 'Generate & Copy (current site)',
+        redirectUrlSetAndCopied: 'Redirect URL generated and copied to clipboard'
+      },
+      oidc: {
+        title: 'OIDC Login',
+        description: 'Configure a generic OIDC / OAuth 2.0 provider for end-user login (e.g. Keycloak, Authentik, Google, Azure AD)',
+        enable: 'Enable OIDC Login',
+        enableHint: 'Show OIDC login button on the login/register pages',
+        displayName: 'Button Label',
+        displayNamePlaceholder: 'e.g., SSO, Google, Keycloak',
+        displayNameHint: 'Text shown on the login button (e.g. "Continue with SSO")',
+        clientId: 'Client ID',
+        clientIdPlaceholder: 'e.g., my-app-client-id',
+        clientIdHint: 'Get this from your OIDC provider',
+        clientSecret: 'Client Secret',
+        clientSecretPlaceholder: '********',
+        clientSecretHint: 'Used by backend to exchange tokens (keep it secret)',
+        clientSecretConfiguredPlaceholder: '********',
+        clientSecretConfiguredHint: 'Secret configured. Leave empty to keep the current value.',
+        redirectUrl: 'Redirect URL',
+        redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/oidc/callback',
+        redirectUrlHint:
+          'Must match the redirect URL configured in your OIDC provider (must be an absolute http(s) URL)',
         quickSetCopy: 'Generate & Copy (current site)',
         redirectUrlSetAndCopied: 'Redirect URL generated and copied to clipboard'
       },

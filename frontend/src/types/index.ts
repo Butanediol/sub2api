@@ -105,6 +105,8 @@ export interface PublicSettings {
   purchase_subscription_url: string
   custom_menu_items: CustomMenuItem[]
   linuxdo_oauth_enabled: boolean
+  oidc_oauth_enabled: boolean
+  oidc_display_name: string
   sora_client_enabled: boolean
   backend_mode_enabled: boolean
   version: string
