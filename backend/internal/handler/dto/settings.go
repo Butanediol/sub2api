@@ -51,6 +51,12 @@ type SystemSettings struct {
 	LinuxDoConnectClientSecretConfigured bool   `json:"linuxdo_connect_client_secret_configured"`
 	LinuxDoConnectRedirectURL            string `json:"linuxdo_connect_redirect_url"`
 
+	OIDCEnabled                bool   `json:"oidc_enabled"`
+	OIDCDisplayName            string `json:"oidc_display_name"`
+	OIDCClientID               string `json:"oidc_client_id"`
+	OIDCClientSecretConfigured bool   `json:"oidc_client_secret_configured"`
+	OIDCRedirectURL            string `json:"oidc_redirect_url"`
+
 	SiteName                    string           `json:"site_name"`
 	SiteLogo                    string           `json:"site_logo"`
 	SiteSubtitle                string           `json:"site_subtitle"`
@@ -128,6 +134,8 @@ type PublicSettings struct {
 	CustomMenuItems                  []CustomMenuItem `json:"custom_menu_items"`
 	CustomEndpoints                  []CustomEndpoint `json:"custom_endpoints"`
 	LinuxDoOAuthEnabled              bool             `json:"linuxdo_oauth_enabled"`
+	OIDCOAuthEnabled                 bool             `json:"oidc_oauth_enabled"`
+	OIDCDisplayName                  string           `json:"oidc_display_name"`
 	SoraClientEnabled                bool             `json:"sora_client_enabled"`
 	BackendModeEnabled               bool             `json:"backend_mode_enabled"`
 	Version                          string           `json:"version"`
