@@ -61,6 +61,13 @@ export interface SystemSettings {
   linuxdo_connect_client_secret_configured: boolean
   linuxdo_connect_redirect_url: string
 
+  // OIDC OAuth settings
+  oidc_enabled: boolean
+  oidc_display_name: string
+  oidc_client_id: string
+  oidc_client_secret_configured: boolean
+  oidc_redirect_url: string
+
   // Model fallback configuration
   enable_model_fallback: boolean
   fallback_model_anthropic: string
@@ -123,6 +130,11 @@ export interface UpdateSettingsRequest {
   linuxdo_connect_client_id?: string
   linuxdo_connect_client_secret?: string
   linuxdo_connect_redirect_url?: string
+  oidc_enabled?: boolean
+  oidc_display_name?: string
+  oidc_client_id?: string
+  oidc_client_secret?: string
+  oidc_redirect_url?: string
   enable_model_fallback?: boolean
   fallback_model_anthropic?: string
   fallback_model_openai?: string
