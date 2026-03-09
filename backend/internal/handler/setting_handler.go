@@ -53,6 +53,8 @@ func (h *SettingHandler) GetPublicSettings(c *gin.Context) {
 		PurchaseSubscriptionURL:          settings.PurchaseSubscriptionURL,
 		CustomMenuItems:                  dto.ParseUserVisibleMenuItems(settings.CustomMenuItems),
 		LinuxDoOAuthEnabled:              settings.LinuxDoOAuthEnabled,
+		OIDCOAuthEnabled:                 settings.OIDCOAuthEnabled,
+		OIDCDisplayName:                  settings.OIDCDisplayName,
 		SoraClientEnabled:                settings.SoraClientEnabled,
 		Version:                          h.version,
 	})
