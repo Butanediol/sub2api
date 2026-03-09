@@ -97,6 +97,11 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		LinuxDoConnectClientID:               settings.LinuxDoConnectClientID,
 		LinuxDoConnectClientSecretConfigured: settings.LinuxDoConnectClientSecretConfigured,
 		LinuxDoConnectRedirectURL:            settings.LinuxDoConnectRedirectURL,
+		OIDCEnabled:                          settings.OIDCEnabled,
+		OIDCDisplayName:                      settings.OIDCDisplayName,
+		OIDCClientID:                         settings.OIDCClientID,
+		OIDCClientSecretConfigured:           settings.OIDCClientSecretConfigured,
+		OIDCRedirectURL:                      settings.OIDCRedirectURL,
 		SiteName:                             settings.SiteName,
 		SiteLogo:                             settings.SiteLogo,
 		SiteSubtitle:                         settings.SiteSubtitle,
@@ -158,6 +163,13 @@ type UpdateSettingsRequest struct {
 	LinuxDoConnectClientID     string `json:"linuxdo_connect_client_id"`
 	LinuxDoConnectClientSecret string `json:"linuxdo_connect_client_secret"`
 	LinuxDoConnectRedirectURL  string `json:"linuxdo_connect_redirect_url"`
+
+	// Generic OIDC OAuth 登录
+	OIDCEnabled      bool   `json:"oidc_enabled"`
+	OIDCDisplayName  string `json:"oidc_display_name"`
+	OIDCClientID     string `json:"oidc_client_id"`
+	OIDCClientSecret string `json:"oidc_client_secret"`
+	OIDCRedirectURL  string `json:"oidc_redirect_url"`
 
 	// OEM设置
 	SiteName                    string                `json:"site_name"`
@@ -291,6 +303,34 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 				return
 			}
 			req.LinuxDoConnectClientSecret = previousSettings.LinuxDoConnectClientSecret
+		}
+	}
+
+	// OIDC 参数验证
+	if req.OIDCEnabled {
+		req.OIDCClientID = strings.TrimSpace(req.OIDCClientID)
+		req.OIDCClientSecret = strings.TrimSpace(req.OIDCClientSecret)
+		req.OIDCRedirectURL = strings.TrimSpace(req.OIDCRedirectURL)
+
+		if req.OIDCClientID == "" {
+			response.BadRequest(c, "OIDC Client ID is required when enabled")
+			return
+		}
+		if req.OIDCRedirectURL == "" {
+			response.BadRequest(c, "OIDC Redirect URL is required when enabled")
+			return
+		}
+		if err := config.ValidateAbsoluteHTTPURL(req.OIDCRedirectURL); err != nil {
+			response.BadRequest(c, "OIDC Redirect URL must be an absolute http(s) URL")
+			return
+		}
+
+		if req.OIDCClientSecret == "" {
+			if previousSettings.OIDCClientSecret == "" {
+				response.BadRequest(c, "OIDC Client Secret is required when enabled")
+				return
+			}
+			req.OIDCClientSecret = previousSettings.OIDCClientSecret
 		}
 	}
 
@@ -449,6 +489,11 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		LinuxDoConnectClientID:           req.LinuxDoConnectClientID,
 		LinuxDoConnectClientSecret:       req.LinuxDoConnectClientSecret,
 		LinuxDoConnectRedirectURL:        req.LinuxDoConnectRedirectURL,
+		OIDCEnabled:                      req.OIDCEnabled,
+		OIDCDisplayName:                  req.OIDCDisplayName,
+		OIDCClientID:                     req.OIDCClientID,
+		OIDCClientSecret:                 req.OIDCClientSecret,
+		OIDCRedirectURL:                  req.OIDCRedirectURL,
 		SiteName:                         req.SiteName,
 		SiteLogo:                         req.SiteLogo,
 		SiteSubtitle:                     req.SiteSubtitle,
@@ -543,6 +588,11 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		LinuxDoConnectClientID:               updatedSettings.LinuxDoConnectClientID,
 		LinuxDoConnectClientSecretConfigured: updatedSettings.LinuxDoConnectClientSecretConfigured,
 		LinuxDoConnectRedirectURL:            updatedSettings.LinuxDoConnectRedirectURL,
+		OIDCEnabled:                          updatedSettings.OIDCEnabled,
+		OIDCDisplayName:                      updatedSettings.OIDCDisplayName,
+		OIDCClientID:                         updatedSettings.OIDCClientID,
+		OIDCClientSecretConfigured:           updatedSettings.OIDCClientSecretConfigured,
+		OIDCRedirectURL:                      updatedSettings.OIDCRedirectURL,
 		SiteName:                             updatedSettings.SiteName,
 		SiteLogo:                             updatedSettings.SiteLogo,
 		SiteSubtitle:                         updatedSettings.SiteSubtitle,
@@ -652,6 +702,21 @@ func diffSettings(before *service.SystemSettings, after *service.SystemSettings,
 	}
 	if before.LinuxDoConnectRedirectURL != after.LinuxDoConnectRedirectURL {
 		changed = append(changed, "linuxdo_connect_redirect_url")
+	}
+	if before.OIDCEnabled != after.OIDCEnabled {
+		changed = append(changed, "oidc_enabled")
+	}
+	if before.OIDCDisplayName != after.OIDCDisplayName {
+		changed = append(changed, "oidc_display_name")
+	}
+	if before.OIDCClientID != after.OIDCClientID {
+		changed = append(changed, "oidc_client_id")
+	}
+	if req.OIDCClientSecret != "" {
+		changed = append(changed, "oidc_client_secret")
+	}
+	if before.OIDCRedirectURL != after.OIDCRedirectURL {
+		changed = append(changed, "oidc_redirect_url")
 	}
 	if before.SiteName != after.SiteName {
 		changed = append(changed, "site_name")
