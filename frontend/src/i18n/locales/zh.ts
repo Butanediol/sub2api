@@ -440,6 +440,15 @@ export default {
       completing: '正在完成注册...',
       completeRegistrationFailed: '注册失败，请检查邀请码后重试。'
     },
+    oidc: {
+      signIn: '使用 {provider} 登录',
+      orContinue: '或使用邮箱密码继续',
+      callbackTitle: '正在完成登录',
+      callbackProcessing: '正在验证登录信息，请稍候...',
+      callbackHint: '如果页面未自动跳转，请返回登录页重试。',
+      callbackMissingToken: '登录信息缺失，请返回重试。',
+      backToLogin: '返回登录'
+    },
     oauth: {
       code: '授权码',
       state: '状态',
@@ -4311,6 +4320,28 @@ export default {
         redirectUrl: '回调地址（Redirect URL）',
         redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/linuxdo/callback',
         redirectUrlHint: '需与 Connect.Linux.Do 中配置的回调地址一致（必须是 http(s) 完整 URL）',
+        quickSetCopy: '使用当前站点生成并复制',
+        redirectUrlSetAndCopied: '已使用当前站点生成回调地址并复制到剪贴板'
+      },
+      oidc: {
+        title: 'OIDC 登录',
+        description: '配置通用 OIDC / OAuth 2.0 提供商用于用户登录（如 Keycloak、Authentik、Google、Azure AD）',
+        enable: '启用 OIDC 登录',
+        enableHint: '在登录/注册页面显示 OIDC 登录入口',
+        displayName: '按钮文字',
+        displayNamePlaceholder: '例如：SSO、Google、Keycloak',
+        displayNameHint: '登录按钮上显示的文字（如"使用 SSO 登录"）',
+        clientId: 'Client ID',
+        clientIdPlaceholder: '例如：my-app-client-id',
+        clientIdHint: '从 OIDC 提供商后台获取',
+        clientSecret: 'Client Secret',
+        clientSecretPlaceholder: '********',
+        clientSecretHint: '用于后端交换 token（请保密）',
+        clientSecretConfiguredPlaceholder: '********',
+        clientSecretConfiguredHint: '密钥已配置，留空以保留当前值。',
+        redirectUrl: '回调地址（Redirect URL）',
+        redirectUrlPlaceholder: 'https://your-domain.com/api/v1/auth/oauth/oidc/callback',
+        redirectUrlHint: '需与 OIDC 提供商中配置的回调地址一致（必须是 http(s) 完整 URL）',
         quickSetCopy: '使用当前站点生成并复制',
         redirectUrlSetAndCopied: '已使用当前站点生成回调地址并复制到剪贴板'
       },
