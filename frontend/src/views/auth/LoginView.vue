@@ -14,6 +14,13 @@
       <!-- LinuxDo Connect OAuth 登录 -->
       <LinuxDoOAuthSection v-if="linuxdoOAuthEnabled && !backendModeEnabled" :disabled="isLoading" />
 
+      <!-- OIDC OAuth 登录 -->
+      <OIDCOAuthSection
+        v-if="oidcOAuthEnabled && !backendModeEnabled"
+        :disabled="isLoading"
+        :display-name="oidcDisplayName"
+      />
+
       <!-- Login Form -->
       <form @submit.prevent="handleLogin" class="space-y-5">
         <!-- Email Input -->
@@ -181,6 +188,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { AuthLayout } from '@/components/layout'
 import LinuxDoOAuthSection from '@/components/auth/LinuxDoOAuthSection.vue'
+import OIDCOAuthSection from '@/components/auth/OIDCOAuthSection.vue'
 import TotpLoginModal from '@/components/auth/TotpLoginModal.vue'
 import Icon from '@/components/icons/Icon.vue'
 import TurnstileWidget from '@/components/TurnstileWidget.vue'
@@ -207,6 +215,8 @@ const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
 const linuxdoOAuthEnabled = ref<boolean>(false)
 const backendModeEnabled = ref<boolean>(false)
+const oidcOAuthEnabled = ref<boolean>(false)
+const oidcDisplayName = ref<string>('SSO')
 const passwordResetEnabled = ref<boolean>(false)
 
 // Turnstile
@@ -247,6 +257,8 @@ onMounted(async () => {
     turnstileSiteKey.value = settings.turnstile_site_key || ''
     linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
     backendModeEnabled.value = settings.backend_mode_enabled
+    oidcOAuthEnabled.value = settings.oidc_oauth_enabled
+    oidcDisplayName.value = settings.oidc_display_name || 'SSO'
     passwordResetEnabled.value = settings.password_reset_enabled
   } catch (error) {
     console.error('Failed to load public settings:', error)
