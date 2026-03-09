@@ -31,6 +31,14 @@ type SystemSettings struct {
 	LinuxDoConnectClientSecretConfigured bool
 	LinuxDoConnectRedirectURL            string
 
+	// Generic OIDC OAuth 登录
+	OIDCEnabled                bool
+	OIDCDisplayName            string
+	OIDCClientID               string
+	OIDCClientSecret           string
+	OIDCClientSecretConfigured bool
+	OIDCRedirectURL            string
+
 	SiteName                    string
 	SiteLogo                    string
 	SiteSubtitle                string
@@ -111,7 +119,11 @@ type PublicSettings struct {
 
 	LinuxDoOAuthEnabled bool
 	BackendModeEnabled  bool
-	Version             string
+
+	OIDCOAuthEnabled bool
+	OIDCDisplayName  string
+
+	Version string
 }
 
 // StreamTimeoutSettings 流超时处理配置（仅控制超时后的处理方式，超时判定由网关配置控制）

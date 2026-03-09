@@ -71,6 +71,9 @@ const (
 // LinuxDoConnectSyntheticEmailDomain 是 LinuxDo Connect 用户的合成邮箱后缀（RFC 保留域名）。
 const LinuxDoConnectSyntheticEmailDomain = "@linuxdo-connect.invalid"
 
+// OIDCSyntheticEmailDomain 是 OIDC 用户的合成邮箱后缀（RFC 保留域名）。
+const OIDCSyntheticEmailDomain = "@oidc.invalid"
+
 // Setting keys
 const (
 	// 注册设置
@@ -104,6 +107,13 @@ const (
 	SettingKeyLinuxDoConnectClientID     = "linuxdo_connect_client_id"
 	SettingKeyLinuxDoConnectClientSecret = "linuxdo_connect_client_secret"
 	SettingKeyLinuxDoConnectRedirectURL  = "linuxdo_connect_redirect_url"
+
+	// Generic OIDC OAuth 登录设置
+	SettingKeyOIDCEnabled      = "oidc_enabled"
+	SettingKeyOIDCDisplayName  = "oidc_display_name"
+	SettingKeyOIDCClientID     = "oidc_client_id"
+	SettingKeyOIDCClientSecret = "oidc_client_secret"
+	SettingKeyOIDCRedirectURL  = "oidc_redirect_url"
 
 	// OEM设置
 	SettingKeySiteName                    = "site_name"                     // 网站名称

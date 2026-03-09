@@ -109,6 +109,8 @@ export interface PublicSettings {
   custom_menu_items: CustomMenuItem[]
   custom_endpoints: CustomEndpoint[]
   linuxdo_oauth_enabled: boolean
+  oidc_oauth_enabled: boolean
+  oidc_display_name: string
   backend_mode_enabled: boolean
   version: string
 }

@@ -163,6 +163,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeyCustomEndpoints,
 		SettingKeyLinuxDoConnectEnabled,
 		SettingKeyBackendModeEnabled,
+		SettingKeyOIDCEnabled,
+		SettingKeyOIDCDisplayName,
 	}
 
 	settings, err := s.settingRepo.GetMultiple(ctx, keys)
@@ -175,6 +177,21 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		linuxDoEnabled = raw == "true"
 	} else {
 		linuxDoEnabled = s.cfg != nil && s.cfg.LinuxDo.Enabled
+	}
+
+	oidcEnabled := false
+	if raw, ok := settings[SettingKeyOIDCEnabled]; ok {
+		oidcEnabled = raw == "true"
+	} else {
+		oidcEnabled = s.cfg != nil && s.cfg.OIDC.Enabled
+	}
+
+	oidcDisplayName := strings.TrimSpace(settings[SettingKeyOIDCDisplayName])
+	if oidcDisplayName == "" && s.cfg != nil {
+		oidcDisplayName = strings.TrimSpace(s.cfg.OIDC.DisplayName)
+	}
+	if oidcDisplayName == "" {
+		oidcDisplayName = "SSO"
 	}
 
 	// Password reset requires email verification to be enabled
@@ -208,6 +225,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		CustomEndpoints:                  settings[SettingKeyCustomEndpoints],
 		LinuxDoOAuthEnabled:              linuxDoEnabled,
 		BackendModeEnabled:               settings[SettingKeyBackendModeEnabled] == "true",
+		OIDCOAuthEnabled:                 oidcEnabled,
+		OIDCDisplayName:                  oidcDisplayName,
 	}, nil
 }
 
@@ -255,6 +274,8 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		CustomEndpoints                  json.RawMessage `json:"custom_endpoints"`
 		LinuxDoOAuthEnabled              bool            `json:"linuxdo_oauth_enabled"`
 		BackendModeEnabled               bool            `json:"backend_mode_enabled"`
+		OIDCOAuthEnabled                 bool            `json:"oidc_oauth_enabled"`
+		OIDCDisplayName                  string          `json:"oidc_display_name,omitempty"`
 		Version                          string          `json:"version,omitempty"`
 	}{
 		RegistrationEnabled:              settings.RegistrationEnabled,
@@ -280,6 +301,8 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		CustomEndpoints:                  safeRawJSONArray(settings.CustomEndpoints),
 		LinuxDoOAuthEnabled:              settings.LinuxDoOAuthEnabled,
 		BackendModeEnabled:               settings.BackendModeEnabled,
+		OIDCOAuthEnabled:                 settings.OIDCOAuthEnabled,
+		OIDCDisplayName:                  settings.OIDCDisplayName,
 		Version:                          s.version,
 	}, nil
 }
@@ -457,6 +480,15 @@ func (s *SettingService) UpdateSettings(ctx context.Context, settings *SystemSet
 	updates[SettingKeyLinuxDoConnectRedirectURL] = settings.LinuxDoConnectRedirectURL
 	if settings.LinuxDoConnectClientSecret != "" {
 		updates[SettingKeyLinuxDoConnectClientSecret] = settings.LinuxDoConnectClientSecret
+	}
+
+	// Generic OIDC OAuth 登录
+	updates[SettingKeyOIDCEnabled] = strconv.FormatBool(settings.OIDCEnabled)
+	updates[SettingKeyOIDCDisplayName] = settings.OIDCDisplayName
+	updates[SettingKeyOIDCClientID] = settings.OIDCClientID
+	updates[SettingKeyOIDCRedirectURL] = settings.OIDCRedirectURL
+	if settings.OIDCClientSecret != "" {
+		updates[SettingKeyOIDCClientSecret] = settings.OIDCClientSecret
 	}
 
 	// OEM设置
@@ -944,6 +976,47 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 	}
 	result.LinuxDoConnectClientSecretConfigured = result.LinuxDoConnectClientSecret != ""
 
+	// OIDC 设置：
+	// - 兼容 config.yaml/env（避免老部署因为未迁移到数据库设置而被意外关闭）
+	// - 支持在后台"系统设置"中覆盖并持久化（存储于 DB）
+	oidcBase := config.OIDCConfig{}
+	if s.cfg != nil {
+		oidcBase = s.cfg.OIDC
+	}
+
+	if raw, ok := settings[SettingKeyOIDCEnabled]; ok {
+		result.OIDCEnabled = raw == "true"
+	} else {
+		result.OIDCEnabled = oidcBase.Enabled
+	}
+
+	if v, ok := settings[SettingKeyOIDCDisplayName]; ok && strings.TrimSpace(v) != "" {
+		result.OIDCDisplayName = strings.TrimSpace(v)
+	} else {
+		result.OIDCDisplayName = oidcBase.DisplayName
+	}
+	if result.OIDCDisplayName == "" {
+		result.OIDCDisplayName = "SSO"
+	}
+
+	if v, ok := settings[SettingKeyOIDCClientID]; ok && strings.TrimSpace(v) != "" {
+		result.OIDCClientID = strings.TrimSpace(v)
+	} else {
+		result.OIDCClientID = oidcBase.ClientID
+	}
+
+	if v, ok := settings[SettingKeyOIDCRedirectURL]; ok && strings.TrimSpace(v) != "" {
+		result.OIDCRedirectURL = strings.TrimSpace(v)
+	} else {
+		result.OIDCRedirectURL = oidcBase.RedirectURL
+	}
+
+	result.OIDCClientSecret = strings.TrimSpace(settings[SettingKeyOIDCClientSecret])
+	if result.OIDCClientSecret == "" {
+		result.OIDCClientSecret = strings.TrimSpace(oidcBase.ClientSecret)
+	}
+	result.OIDCClientSecretConfigured = result.OIDCClientSecret != ""
+
 	// Model fallback settings
 	result.EnableModelFallback = settings[SettingKeyEnableModelFallback] == "true"
 	result.FallbackModelAnthropic = s.getStringOrDefault(settings, SettingKeyFallbackModelAnthropic, "claude-3-5-sonnet-20241022")
@@ -1313,6 +1386,102 @@ func (s *SettingService) SetOverloadCooldownSettings(ctx context.Context, settin
 	}
 
 	return s.settingRepo.Set(ctx, SettingKeyOverloadCooldownSettings, string(data))
+}
+
+// GetOIDCOAuthConfig 返回用于登录的"最终生效" OIDC 配置。
+//
+// 优先级：
+// - 若对应系统设置键存在，则覆盖 config.yaml/env 的值
+// - 否则回退到 config.yaml/env 的值
+func (s *SettingService) GetOIDCOAuthConfig(ctx context.Context) (config.OIDCConfig, error) {
+	if s == nil || s.cfg == nil {
+		return config.OIDCConfig{}, infraerrors.ServiceUnavailable("CONFIG_NOT_READY", "config not loaded")
+	}
+
+	effective := s.cfg.OIDC
+
+	keys := []string{
+		SettingKeyOIDCEnabled,
+		SettingKeyOIDCDisplayName,
+		SettingKeyOIDCClientID,
+		SettingKeyOIDCClientSecret,
+		SettingKeyOIDCRedirectURL,
+	}
+	settings, err := s.settingRepo.GetMultiple(ctx, keys)
+	if err != nil {
+		return config.OIDCConfig{}, fmt.Errorf("get oidc settings: %w", err)
+	}
+
+	if raw, ok := settings[SettingKeyOIDCEnabled]; ok {
+		effective.Enabled = raw == "true"
+	}
+	if v, ok := settings[SettingKeyOIDCDisplayName]; ok && strings.TrimSpace(v) != "" {
+		effective.DisplayName = strings.TrimSpace(v)
+	}
+	if v, ok := settings[SettingKeyOIDCClientID]; ok && strings.TrimSpace(v) != "" {
+		effective.ClientID = strings.TrimSpace(v)
+	}
+	if v, ok := settings[SettingKeyOIDCClientSecret]; ok && strings.TrimSpace(v) != "" {
+		effective.ClientSecret = strings.TrimSpace(v)
+	}
+	if v, ok := settings[SettingKeyOIDCRedirectURL]; ok && strings.TrimSpace(v) != "" {
+		effective.RedirectURL = strings.TrimSpace(v)
+	}
+
+	if !effective.Enabled {
+		return config.OIDCConfig{}, infraerrors.NotFound("OAUTH_DISABLED", "oidc login is disabled")
+	}
+
+	if strings.TrimSpace(effective.ClientID) == "" {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc client id not configured")
+	}
+	if strings.TrimSpace(effective.AuthorizeURL) == "" {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc authorize url not configured")
+	}
+	if strings.TrimSpace(effective.TokenURL) == "" {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc token url not configured")
+	}
+	if strings.TrimSpace(effective.UserInfoURL) == "" {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc userinfo url not configured")
+	}
+	if strings.TrimSpace(effective.RedirectURL) == "" {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc redirect url not configured")
+	}
+	if strings.TrimSpace(effective.FrontendRedirectURL) == "" {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc frontend redirect url not configured")
+	}
+
+	if err := config.ValidateAbsoluteHTTPURL(effective.AuthorizeURL); err != nil {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc authorize url invalid")
+	}
+	if err := config.ValidateAbsoluteHTTPURL(effective.TokenURL); err != nil {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc token url invalid")
+	}
+	if err := config.ValidateAbsoluteHTTPURL(effective.UserInfoURL); err != nil {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc userinfo url invalid")
+	}
+	if err := config.ValidateAbsoluteHTTPURL(effective.RedirectURL); err != nil {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc redirect url invalid")
+	}
+	if err := config.ValidateFrontendRedirectURL(effective.FrontendRedirectURL); err != nil {
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc frontend redirect url invalid")
+	}
+
+	method := strings.ToLower(strings.TrimSpace(effective.TokenAuthMethod))
+	switch method {
+	case "", "client_secret_post", "client_secret_basic":
+		if strings.TrimSpace(effective.ClientSecret) == "" {
+			return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc client secret not configured")
+		}
+	case "none":
+		if !effective.UsePKCE {
+			return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc pkce must be enabled when token_auth_method=none")
+		}
+	default:
+		return config.OIDCConfig{}, infraerrors.InternalServer("OAUTH_CONFIG_INVALID", "oidc token_auth_method invalid")
+	}
+
+	return effective, nil
 }
 
 // GetStreamTimeoutSettings 获取流超时处理配置
